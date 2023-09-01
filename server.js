@@ -27,6 +27,39 @@ const initquestions = [
         choices: ['View all employees', 'View all departments', 'View all roles', 'Add an employee', 'Add a department', 'Add a role', 'Update an employee role', 'Exit'],
     },
 ];
+const addEmployeeQuestions = [
+    {
+        type: 'input',
+        name: 'first_name',
+        message: 'What is the employee\'s first name?',
+    },
+    {
+        type: 'input',
+        name: 'last_name',
+        message: 'What is the employee\'s last name?',
+    },
+    {
+        type: 'list',
+        name: 'role_id',
+        message: 'What is the employee\'s role?',
+        choices: ['Sales Lead', 'Salesperson', 'Lead Engineer', 'Software Engineer', 'Account Manager', 'Accountant', 'Legal Team Lead', 'Lawyer'],
+    },
+    {
+        type: 'list',
+        name: 'manager_id',
+        message: 'Who is the employee\'s manager?',
+        choices: ['Kevin Donnelly', 'Mike Smith', 'Tom Joneson', 'Joe Duck']
+    },
+];
+const addDepartmentQuestions = [
+    {
+        type: 'input',
+        name: 'department_name',
+        message: 'What is the name of the department you would like to add?',
+    },
+];
+     
+        
 // function to initialize program
 function init() {
     inquirer.prompt(initquestions)
@@ -42,9 +75,10 @@ function init() {
 
             } else if (response.home === 'View all roles') {
                 viewRoles();
+            }
+             else if (response.home === 'Add an employee') {
+                addEmployee();
             }})}
-        //     } else if (response.home === 'Add an employee') {
-        //         addEmployee();
         //     } else if (response.home === 'Add a department') {
         //         addDepartment();
         //     } else if (response.home === 'Add a role') {
@@ -72,12 +106,15 @@ function viewEmployees() {
 function viewDepartments() {
     const sql = `SELECT * FROM department`;
     db.query(sql, (err, rows) => {
-        if (err) {
+      if (err) {
         res.status(500).json({ error: err.message });
         return;
-        }
+      }
         console.table(rows);
-    })}
+        init();
+    });
+    }
+
 function viewRoles() {
     const sql = `SELECT * FROM role`;
     db.query(sql, (err, rows) => {
@@ -86,7 +123,24 @@ function viewRoles() {
         return;
         }   
         console.table(rows);
+        init();
     })}
+function addEmployee() {
+    inquirer.prompt(addEmployeeQuestions)
+        .then((response) => {
+            console.log(response);
+            const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`;
+            const params = [response.first_name, response.last_name, response.role_id, response.manager_id];
+            db.query(sql, params, (err, result) => {
+        
+                console.log('Employee added!');
+                init();
+            })
+        })
+    }
+function addDepartment() {
+    inquirer.prompt(addDepartmentQuestions)
+
 init();
 app.use((req, res) => {
     res.status(404).end();
