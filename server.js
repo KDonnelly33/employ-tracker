@@ -38,10 +38,11 @@ function init() {
            
             } else if (response.home === 'View all departments') {
                 viewDepartments();
-            }})}
+          
 
-        //     } else if (response.home === 'View all roles') {
-        //         viewRoles();
+            } else if (response.home === 'View all roles') {
+                viewRoles();
+            }})}
         //     } else if (response.home === 'Add an employee') {
         //         addEmployee();
         //     } else if (response.home === 'Add a department') {
@@ -68,7 +69,7 @@ function viewEmployees() {
         init();
     });
     }
-function ViewDepartments() {
+function viewDepartments() {
     const sql = `SELECT * FROM department`;
     db.query(sql, (err, rows) => {
         if (err) {
@@ -77,7 +78,15 @@ function ViewDepartments() {
         }
         console.table(rows);
     })}
-
+function viewRoles() {
+    const sql = `SELECT * FROM role`;
+    db.query(sql, (err, rows) => {
+        if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+        }   
+        console.table(rows);
+    })}
 init();
 app.use((req, res) => {
     res.status(404).end();
