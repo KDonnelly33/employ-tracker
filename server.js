@@ -19,6 +19,7 @@ const db = mysql.createConnection(
   },
   console.log(`Connected to the employee_db database.`)
 );
+// Home questions
 const initquestions = [
     {
         type: 'list',
@@ -27,7 +28,8 @@ const initquestions = [
         choices: ['View all employees', 'View all departments', 'View all roles', 'Add an employee', 'Add a department', 'Add a role', 'Update an employee role', 'Exit'],
     },
 ];
-const addEmployeeQuestions = [
+// Add employee questions
+const addEmployeeQuestions = async  () => [
     {
         type: 'input',
         name: 'first_name',
@@ -42,15 +44,22 @@ const addEmployeeQuestions = [
         type: 'list',
         name: 'role_id',
         message: 'What is the employee\'s role?',
-        choices: ['Sales Lead', 'Salesperson', 'Lead Engineer', 'Software Engineer', 'Account Manager', 'Accountant', 'Legal Team Lead', 'Lawyer'],
+        choices: await getEmployees()
     },
     {
         type: 'list',
         name: 'manager_id',
         message: 'Who is the employee\'s manager?',
-        choices: ['Kevin Donnelly', 'Mike Smith', 'Tom Joneson', 'Joe Duck']
-    },
+        choices: await getEmployees()
+    }
 ];
+
+const getEmployees = async() => {
+const [rows,fields] = await db.promise().query(`SELECT CONCAT(first_name, " ", last_name) AS name, id AS value FROM employee`)
+console.log(rows)
+return rows
+}
+// Add department questions
 const addDepartmentQuestions = [
     {
         type: 'input',
@@ -85,32 +94,22 @@ function init() {
         //         addRole();
         //     } else if (response.home === 'Update an employee role') {
         //         updateRole();
-        //     } else if (response.home === 'Exit') {
-        //         console.log('Goodbye!');
-        //         process.exit();
-//             }
-//         });
+        
 // }
 // // function to view all employees
 function viewEmployees() {
     const sql = `SELECT * FROM employee`;
     db.query(sql, (err, rows) => {
-        if (err) {
-        res.status(500).json({ error: err.message });
-        return;
-        }
-        console.table(rows);
+    
+        console.log(rows);
         init();
     });
     }
 function viewDepartments() {
-    const sql = `SELECT * FROM department`;
+    const sql = `SELECT id AS value, emp_name AS name FROM department`;
     db.query(sql, (err, rows) => {
-      if (err) {
-        res.status(500).json({ error: err.message });
-        return;
-      }
-        console.table(rows);
+   
+        console.log(rows);
         init();
     });
     }
@@ -118,15 +117,12 @@ function viewDepartments() {
 function viewRoles() {
     const sql = `SELECT * FROM role`;
     db.query(sql, (err, rows) => {
-        if (err) {
-        res.status(500).json({ error: err.message });
-        return;
-        }   
+        
         console.table(rows);
         init();
     })}
-function addEmployee() {
-    inquirer.prompt(addEmployeeQuestions)
+async function addEmployee() {
+    inquirer.prompt(await addEmployeeQuestions())
         .then((response) => {
             console.log(response);
             const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`;
@@ -138,16 +134,17 @@ function addEmployee() {
             })
         })
     }
-function addDepartment() {
-    inquirer.prompt(addDepartmentQuestions)
+// function addDepartment() {
+//     inquirer.prompt(addDepartmentQuestions)
 
+
+// // initializes program
 init();
-app.use((req, res) => {
-    res.status(404).end();
-  });
-  // listens for server
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-
+// app.use((req, res) => {
+//     res.status(404).end();
+//   });
+//   // listens for server
+//   app.listen(PORT, () => {
+//     console.log(`Server running on port ${PORT}`);
+//   });
 
