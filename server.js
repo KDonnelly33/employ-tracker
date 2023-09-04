@@ -25,7 +25,7 @@ const initquestions = [
         type: 'list',
         name: 'home',
         message: 'What would you like to do?',
-        choices: ['View all employees', 'View all departments', 'View all roles', 'Add an employee', 'Add a department', 'Add a role', 'Update an employee role','View total budget of a department' 'Exit'],
+        choices: ['View all employees', 'View all departments', 'View all roles', 'Add an employee', 'Add a department', 'Add a role', 'Update an employee role','View total budget of a department', 'View Employee\'s by department'],
     },
 ];
 // Add employee questions
@@ -95,6 +95,14 @@ const updateRoleQuestions = async () => [
         choices: await getEmpRole()
     }
 ];
+const viewEmpByDeptQuestions = async () => [
+    {
+        type: 'list',
+        name: 'department_id',
+        message: 'Which department would you like to view?',
+        choices: await getDepartments()
+    }
+];
 // Get employee roles
 const getEmpRole = async() => {
 const [rows,fields] = await db.promise().query(`SELECT title AS name, id AS value FROM role`)
@@ -143,7 +151,10 @@ function init() {
                 updateRole();
             } else if (response.home === 'View total budget of a department') {
                 viewBudget();
+            } else if (response.home === 'View Employee\'s by department') {
+                viewEmpByDept();
             }})}
+            // function fot view all employees
             function viewEmployees() {
                 const sql = `SELECT CONCAT(employee.first_name, " ", employee.last_name) AS employee, role.title, department.department_name AS department, role.salary, CONCAT(manager.first_name, " ", manager.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee manager ON manager.id = employee.manager_id`;
                 db.query(sql, (err, rows) => {
@@ -152,6 +163,7 @@ function init() {
                     init();
                 });
                 }
+            // function for view all departments
             function viewDepartments() {
                 const sql = `SELECT id AS value, department_name AS name FROM department`;
                 db.query(sql, (err, rows) => {
@@ -160,7 +172,7 @@ function init() {
                     init();
                 });
                 }
-            
+            // function for view all roles
             function viewRoles() {
                 const sql = `SELECT * FROM role`;
                 db.query(sql, (err, rows) => {
@@ -168,6 +180,7 @@ function init() {
                     console.table(rows);
                     init();
                 })}
+            // function for add employee
             async function addEmployee() {
                 inquirer.prompt(await addEmployeeQuestions())
                     .then((response) => {
@@ -181,6 +194,7 @@ function init() {
                         })
                     })
                 }
+                //  function for add role
             async function addRole() {
                 inquirer.prompt(await addRoleQuestions())
                     .then((response) => {
@@ -193,6 +207,7 @@ function init() {
                         })
                     })
                 }
+                // function for add department
             function addDepartment() {
                 inquirer.prompt(addDepartmentQuestions)
                     .then((response) => {
@@ -205,6 +220,7 @@ function init() {
                         })
                     })
                 }
+                // function for update employee role
              async   function updateRole() {
                     inquirer.prompt(await updateRoleQuestions())
                         .then((response) => {
@@ -217,6 +233,31 @@ function init() {
                             })
                         })
                     }
+                    // function for view budget
+            function viewBudget() {
+                const sql = `SELECT department.department_name AS department, SUM(role.salary) AS budget FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id GROUP BY department.department_name`;
+                db.query(sql, (err, rows) => {
+                    console.table(rows);
+                    init();
+                });
+                }
+// function to view employees by department
+       async function viewEmpByDept() {
+                inquirer.prompt(await viewEmpByDeptQuestions())
+                    .then((response) => {
+                        console.log(response);
+                        const sql = `Select CONCAT(employee.first_name, " ", employee.last_name) AS employee, role.title, department.department_name AS department FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id WHERE department.id = ?`;
+                        const params = [response.department_id];
+                        db.query(sql, params, (err, rows) => {
+                            console.table(rows);
+                            init();
+                        });
+                    })
+                }
+
+              
+
+
 
 // // initializes program
 init();
