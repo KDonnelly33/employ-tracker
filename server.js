@@ -11,21 +11,21 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 // connects to database
 const db = mysql.createConnection(
-  {
-    host: 'localhost',
-    user: 'root',
-    password: 'Pacosucks88',
-    database: 'employee_db'
-  },
-  console.log(`Connected to the employee_db database.`)
-);
+    {
+      host: 'localhost',
+      user: 'root',
+      password: 'Pacosucks88',
+      database: 'employee_db'
+    },
+    console.log(`Connected to the employee_db database.`)
+  );
 // Home questions
 const initquestions = [
     {
         type: 'list',
         name: 'home',
         message: 'What would you like to do?',
-        choices: ['View all employees', 'View all departments', 'View all roles', 'Add an employee', 'Add a department', 'Add a role', 'Update an employee role', 'Exit'],
+        choices: ['View all employees', 'View all departments', 'View all roles', 'Add an employee', 'Add a department', 'Add a role', 'Update an employee role','View total budget of a department' 'Exit'],
     },
 ];
 // Add employee questions
@@ -44,7 +44,7 @@ const addEmployeeQuestions = async  () => [
         type: 'list',
         name: 'role_id',
         message: 'What is the employee\'s role?',
-        choices: await getEmployees()
+        choices: await getEmpRole()
     },
     {
         type: 'list',
@@ -53,13 +53,26 @@ const addEmployeeQuestions = async  () => [
         choices: await getEmployees()
     }
 ];
-
-const getEmployees = async() => {
-const [rows,fields] = await db.promise().query(`SELECT CONCAT(first_name, " ", last_name) AS name, id AS value FROM employee`)
-console.log(rows)
-return rows
-}
-// Add department questions
+// Add role questions
+const addRoleQuestions = async () => [
+    {
+        type: 'input',
+        name: 'title',
+        message: 'What is the name of the role you would like to add?',
+    },
+    {
+        type: 'input',
+        name: 'salary',
+        message: 'What is the salary of the role you would like to add?',
+    },
+    {
+        type: 'list',
+        name: 'department_id',
+        message: 'What is the department of the role you would like to add?',
+        choices: await getDepartments()
+    }
+];
+// add department questions
 const addDepartmentQuestions = [
     {
         type: 'input',
@@ -67,14 +80,47 @@ const addDepartmentQuestions = [
         message: 'What is the name of the department you would like to add?',
     },
 ];
-     
+// update employee role questions
+const updateRoleQuestions = async () => [
+    {
+        type: 'list',
+        name: 'employee_id',
+        message: 'Which employee\'s role would you like to update?',
+        choices: await getEmployees()
+    },
+    {
+        type: 'list',
+        name: 'role_id',
+        message: 'What is the employee\'s new role?',
+        choices: await getEmpRole()
+    }
+];
+// Get employee roles
+const getEmpRole = async() => {
+const [rows,fields] = await db.promise().query(`SELECT title AS name, id AS value FROM role`)
+console.log(rows)
+return rows
+}
+// get employees for manager role
+const getEmployees = async() => {
+const [rows,fields] = await db.promise().query(`SELECT CONCAT(first_name, " ", last_name) AS name, id AS value FROM employee`)
+console.log(rows)
+return rows
+}
+// get departments for role
+const getDepartments = async() => {
+const [rows,fields] = await db.promise().query(`SELECT department_name AS name, id AS value FROM department`)
+console.log(rows)
+return rows
+}
+
         
 // function to initialize program
 function init() {
     inquirer.prompt(initquestions)
         .then((response) => {
             console.log(response);
-  
+//   if else statements for user input to call function for each choice
             if (response.home === 'View all employees') {
                 viewEmployees();
            
@@ -87,64 +133,98 @@ function init() {
             }
              else if (response.home === 'Add an employee') {
                 addEmployee();
+                } else if (response.home === 'Add a role') {
+                    addRole();
+          
+            } else if (response.home === 'Add a department') {
+                addDepartment();
+           
+            } else if (response.home === 'Update an employee role') {
+                updateRole();
+            } else if (response.home === 'View total budget of a department') {
+                viewBudget();
             }})}
-        //     } else if (response.home === 'Add a department') {
-        //         addDepartment();
-        //     } else if (response.home === 'Add a role') {
-        //         addRole();
-        //     } else if (response.home === 'Update an employee role') {
-        //         updateRole();
-        
-// }
-// // function to view all employees
-function viewEmployees() {
-    const sql = `SELECT * FROM employee`;
-    db.query(sql, (err, rows) => {
-    
-        console.log(rows);
-        init();
-    });
-    }
-function viewDepartments() {
-    const sql = `SELECT id AS value, emp_name AS name FROM department`;
-    db.query(sql, (err, rows) => {
-   
-        console.log(rows);
-        init();
-    });
-    }
-
-function viewRoles() {
-    const sql = `SELECT * FROM role`;
-    db.query(sql, (err, rows) => {
-        
-        console.table(rows);
-        init();
-    })}
-async function addEmployee() {
-    inquirer.prompt(await addEmployeeQuestions())
-        .then((response) => {
-            console.log(response);
-            const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`;
-            const params = [response.first_name, response.last_name, response.role_id, response.manager_id];
-            db.query(sql, params, (err, result) => {
-        
-                console.log('Employee added!');
-                init();
-            })
-        })
-    }
-// function addDepartment() {
-//     inquirer.prompt(addDepartmentQuestions)
-
+            function viewEmployees() {
+                const sql = `SELECT CONCAT(employee.first_name, " ", employee.last_name) AS employee, role.title, department.department_name AS department, role.salary, CONCAT(manager.first_name, " ", manager.last_name) AS manager FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id LEFT JOIN employee manager ON manager.id = employee.manager_id`;
+                db.query(sql, (err, rows) => {
+                
+                    console.table(rows);
+                    init();
+                });
+                }
+            function viewDepartments() {
+                const sql = `SELECT id AS value, department_name AS name FROM department`;
+                db.query(sql, (err, rows) => {
+               
+                    console.table(rows);
+                    init();
+                });
+                }
+            
+            function viewRoles() {
+                const sql = `SELECT * FROM role`;
+                db.query(sql, (err, rows) => {
+                    
+                    console.table(rows);
+                    init();
+                })}
+            async function addEmployee() {
+                inquirer.prompt(await addEmployeeQuestions())
+                    .then((response) => {
+                        console.log(response);
+                        const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`;
+                        const params = [response.first_name, response.last_name, response.role_id, response.manager_id];
+                        db.query(sql, params, (err, result) => {
+                    
+                            console.log('Employee added!');
+                            init();
+                        })
+                    })
+                }
+            async function addRole() {
+                inquirer.prompt(await addRoleQuestions())
+                    .then((response) => {
+                        console.log(response);
+                        const sql = `INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)`;
+                        const params = [response.title, response.salary, response.department_id];
+                        db.query(sql, params, (err, result) => {
+                            console.log('Role added!');
+                            init();
+                        })
+                    })
+                }
+            function addDepartment() {
+                inquirer.prompt(addDepartmentQuestions)
+                    .then((response) => {
+                        console.log(response);
+                        const sql = `INSERT INTO department (department_name) VALUES (?)`;
+                        const params = [response.department_name];
+                        db.query(sql, params, (err, result) => {
+                            console.log('Department added!');
+                            init();
+                        })
+                    })
+                }
+             async   function updateRole() {
+                    inquirer.prompt(await updateRoleQuestions())
+                        .then((response) => {
+                            console.log(response);
+                            const sql = `UPDATE employee SET role_id = ? WHERE id = ?`;
+                            const params = [response.role_id, response.employee_id];
+                            db.query(sql, params, (err, result) => {
+                                console.log('Employee role updated!');
+                                init();
+                            })
+                        })
+                    }
 
 // // initializes program
 init();
-// app.use((req, res) => {
-//     res.status(404).end();
-//   });
-//   // listens for server
-//   app.listen(PORT, () => {
-//     console.log(`Server running on port ${PORT}`);
-//   });
+app.use((req, res) => {
+    res.status(404).end();
+  });
+  // listens for server
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 
