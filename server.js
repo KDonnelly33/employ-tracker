@@ -25,7 +25,7 @@ const initquestions = [
         type: 'list',
         name: 'home',
         message: 'What would you like to do?',
-        choices: ['View all employees', 'View all departments', 'View all roles', 'Add an employee', 'Add a department', 'Add a role', 'Update an employee role','View total budget of a department', 'View Employee\'s by department'],
+        choices: ['View all employees', 'View all departments', 'View all roles', 'Add an employee', 'Add a department', 'Add a role', 'Update an employee role','View total budget of a department', 'View Employee\'s by department', 'Delete and employee, role, or department'],
     },
 ];
 // Add employee questions
@@ -103,6 +103,43 @@ const viewEmpByDeptQuestions = async () => [
         choices: await getDepartments()
     }
 ];
+// delete employee, role, or department questions
+const deleteItemQuestions = [
+    {
+        type: 'list',
+        name: 'delete',
+        message: 'What would you like to delete?',
+        choices: ['Employee', 'Role', 'Department'],
+    },
+];
+// delete employee, role, or department questions
+const deleteEmployeeQuestions = async () => [
+    {
+        type: 'list',
+        name: 'employee_id',
+        message: 'Which employee would you like to delete?',
+        choices: await getEmployees()
+    }
+];
+// delete employee, role, or department questions
+const deleteRoleQuestions = async () => [
+    {
+        type: 'list',
+        name: 'role_id',
+        message: 'Which role would you like to delete?',
+        choices: await getEmpRole()
+    }
+];
+// delete employee, role, or department questions
+const deleteDepartmentQuestions = async () => [
+    {
+        type: 'list',
+        name: 'department_id',
+        message: 'Which department would you like to delete?',
+        choices: await getDepartments()
+    }
+];
+
 // Get employee roles
 const getEmpRole = async() => {
 const [rows,fields] = await db.promise().query(`SELECT title AS name, id AS value FROM role`)
@@ -153,6 +190,8 @@ function init() {
                 viewBudget();
             } else if (response.home === 'View Employee\'s by department') {
                 viewEmpByDept();
+            } else if (response.home === 'Delete and employee, role, or department') {
+                deleteItem();
             }})}
             // function fot view all employees
             function viewEmployees() {
@@ -254,8 +293,60 @@ function init() {
                         });
                     })
                 }
+      //fuction to delete employee, role, or department
+      async function deleteItem() {
+        inquirer.prompt(deleteItemQuestions)
+            .then((response) => {
+                console.log(response);
+                if (response.delete === 'Employee') {
+                    deleteEmployee();
+                } else if (response.delete === 'Role') {
+                    deleteRole();
+                } else if (response.delete === 'Department') {
+                    deleteDepartment();
+                }
+            })
+        }
+        // function to delete employee
+        async function deleteEmployee() {
+            inquirer.prompt(await deleteEmployeeQuestions())
+                .then((response) => {
+                    console.log(response);
+                    const sql = `DELETE FROM employee WHERE id = ?`;
+                    const params = [response.employee_id];
+                    db.query(sql, params, (err, result) => {
+                        console.log('Employee deleted!');
+                        init();
+                    })
+                })
+            };
+            // function to delete role
+        async function deleteRole() {
+            inquirer.prompt(await deleteRoleQuestions())
+                .then((response) => {
+                    console.log(response);
+                    const sql = `DELETE FROM role WHERE id = ?`;
+                    const params = [response.role_id];
+                    db.query(sql, params, (err, result) => {
+                        console.log('Role deleted!');
+                        init();
+                    })
+                })
+            };
+            // function to delete department
+        async function deleteDepartment() {
+            inquirer.prompt(await deleteDepartmentQuestions())
+                .then((response) => {
+                    const sql = `DELETE FROM department WHERE id = ?`;
+                    const params = [response.department_id];
+                    db.query(sql, params, (err, result) => {
+                        console.log('Department deleted!');
+                        init();
+                    })
+                })
+            };  
 
-              
+
 
 
 
